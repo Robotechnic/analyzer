@@ -2059,6 +2059,12 @@
             }
           },
           "additionalProperties": false
+        },
+        "success-messages": {
+          "title": "exp.success-messages",
+          "description": "Print success messages for analyses that found no issues.",
+          "type": "boolean",
+          "default": false
         }
       },
       "additionalProperties": false
