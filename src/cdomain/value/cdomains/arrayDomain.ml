@@ -1238,7 +1238,7 @@ struct
       (warn_past_end "May access array past end: potential buffer overflow"; x)
     else
       let _ = if get_bool "exp.success-messages" then
-        M.success ~category:M.Category.Behavior.Undefined.ArrayOutOfBounds.unknown "Array access in bounds" in
+          M.success ~category:M.Category.Behavior.Undefined.ArrayOutOfBounds.unknown "Array access in bounds" in
       let min_must_null = Nulls.min_elem Definitely nulls in
       let new_size = Idx.of_int ILong (Z.succ min_must_null) in
       let min_may_null = Nulls.min_elem Possibly nulls in
@@ -1367,7 +1367,7 @@ struct
          else if min_dstsize <. max_srclen then
            warn_past_end "The length of string src may be greater than the allocated size for dest"
          else if get_bool "exp.success-messages" then
-            M.success ~category:M.Category.Behavior.Undefined.ArrayOutOfBounds.unknown "The length of string src is less than or equal to the allocated size for dest"
+           M.success ~category:M.Category.Behavior.Undefined.ArrayOutOfBounds.unknown "The length of string src is less than or equal to the allocated size for dest"
         );
         let must_nulls_set_result =
           let min_size2 = BatOption.default Z.zero (Idx.minimal truncatedsize) in
@@ -1387,8 +1387,8 @@ struct
       | Some min_size1, None, Some min_len2, Some max_len2 ->
         (if min_size1 <. max_len2 then
            warn_past_end "The length of string src may be greater than the allocated size for dest"
-        else if get_bool "exp.success-messages" then
-          M.success ~category:M.Category.Behavior.Undefined.ArrayOutOfBounds.unknown "The length of string src is less than or equal to the allocated size for dest" 
+         else if get_bool "exp.success-messages" then
+           M.success ~category:M.Category.Behavior.Undefined.ArrayOutOfBounds.unknown "The length of string src is less than or equal to the allocated size for dest" 
         );
         let must_nulls_set_result =
           let min_size2 = BatOption.default Z.zero (Idx.minimal truncatedsize) in
@@ -1419,7 +1419,7 @@ struct
         (if min_size1 <. min_len2 then
            warn_past_end "The length of string src may be greater than the allocated size for dest"
          else if get_bool "exp.success-messages" then
-          M.success ~category:M.Category.Behavior.Undefined.ArrayOutOfBounds.unknown "The length of string src is less than or equal to the allocated size for dest" 
+           M.success ~category:M.Category.Behavior.Undefined.ArrayOutOfBounds.unknown "The length of string src is less than or equal to the allocated size for dest" 
         );
         (* do not keep any index of dest as no maximal strlen of src *)
         let min_size2 = BatOption.default Z.zero (Idx.minimal truncatedsize) in
