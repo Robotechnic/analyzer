@@ -1077,6 +1077,9 @@ struct
             else if AD.may_be_null adr then (
               AnalysisStateUtil.set_mem_safety_flag InvalidDeref;
               M.warn ~category:M.Category.Behavior.Undefined.nullpointer_dereference ~tags:[CWE 476] "May dereference NULL pointer"
+            )
+            else if get_bool "exp.success-messages" then (
+              M.success ~category:M.Category.Behavior.Undefined.nullpointer_dereference ~tags:[CWE 476] "Won't dereference NULL pointer"
             );
             (* Warn if any of the addresses contains a non-local and non-global variable *)
             if AD.exists (function
@@ -2269,6 +2272,8 @@ struct
       ) else if has_non_zero_offset a then (
         AnalysisStateUtil.set_mem_safety_flag InvalidFree;
         M.warn ~category:(Behavior (Undefined InvalidMemoryDeallocation)) ~tags:[CWE 761] "Free of memory not at start of buffer in function %s for pointer %a" special_fn.vname d_exp ptr
+      ) else if get_bool "exp.success-messages" then (
+        M.success ~category:(Behavior (Undefined InvalidMemoryDeallocation)) "Free of memory at %a in function %s" d_exp ptr special_fn.vname
       )
     | _ ->
       AnalysisStateUtil.set_mem_safety_flag InvalidFree;

@@ -288,8 +288,10 @@ struct
         if GobOption.exists (Z.equal Z.zero) (ID.to_int x) then
           (M.error ~category:M.Category.Integer.div_by_zero ~tags:[CWE 369] "Must Undefined Behavior: Second argument of div or mod is 0, continuing with top";
            ID.top_of ikind)
-        else
+        else (
+          if GobConfig.get_bool "exp.success-messages" then M.success ~category:M.Category.Integer.div_by_zero "Second argument of div or mod is certainly not 0";
           x
+        )
       in
       let meet_bin a' b'  = id_meet_down ~old:a ~c:a', id_meet_down ~old:b ~c:b' in
       let meet_com oi = (* commutative *)

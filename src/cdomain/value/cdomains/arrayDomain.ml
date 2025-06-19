@@ -838,7 +838,8 @@ let array_oob_check ( type a ) (module Idx: IntDomain.Z with type t = a) (x, l) 
     (* For an explanation of the warning types check the Pull Request #255 *)
     match(idx_after_start, idx_before_end) with
     | Some true, Some true -> (* Certainly in bounds on both sides.*)
-      ()
+      if get_bool "exp.success-messages" then
+        M.success ~category:M.Category.Behavior.Undefined.ArrayOutOfBounds.unknown "Accessing array in bounds"
     | Some true, Some false -> (* The following matching differentiates the must and may cases*)
       AnalysisStateUtil.set_mem_safety_flag InvalidDeref;
       M.error ~category:M.Category.Behavior.Undefined.ArrayOutOfBounds.past_end "Must access array past end"
@@ -1162,20 +1163,29 @@ struct
         else if min_i <. Z.zero then
           (M.warn ~category:ArrayOobMessage.before_start "May try to create an array of negative size";
            Z.zero, Some max_i)
-        else
+        else (
+          if get_bool "exp.success-messages" then
+            M.success ~category:M.Category.Behavior.Undefined.ArrayOutOfBounds.before_start "Array has a non negative size";
           min_i, Some max_i
+        )
       | None, Some max_i ->
         if max_i <. Z.zero then
           (M.error ~category:ArrayOobMessage.before_start "Tries to create an array of negative size";
            Z.zero, Some Z.zero)
-        else
+        else(
+          if get_bool "exp.success-messages" then
+            M.success ~category:M.Category.Behavior.Undefined.ArrayOutOfBounds.before_start "Array has a non negative size";
           Z.zero, Some max_i
+        )
       | Some min_i, None ->
         if min_i <. Z.zero then
           (M.warn ~category:ArrayOobMessage.before_start "May try to create an array of negative size";
            Z.zero, None)
-        else
+        else(
+          if get_bool "exp.success-messages" then
+            M.success ~category:M.Category.Behavior.Undefined.ArrayOutOfBounds.before_start "Array has a non negative size";
           min_i, None
+        )
       | None, None -> Z.zero, None
     in
     let size = BatOption.map_default (fun max -> Idx.of_interval ILong (min_i, max)) (Idx.starting ILong min_i) max_i in
@@ -1227,6 +1237,8 @@ struct
     else if Nulls.is_empty Possibly nulls then
       (warn_past_end "May access array past end: potential buffer overflow"; x)
     else
+      let _ = if get_bool "exp.success-messages" then
+        M.success ~category:M.Category.Behavior.Undefined.ArrayOutOfBounds.unknown "Array access in bounds" in
       let min_must_null = Nulls.min_elem Definitely nulls in
       let new_size = Idx.of_int ILong (Z.succ min_must_null) in
       let min_may_null = Nulls.min_elem Possibly nulls in
@@ -1272,12 +1284,18 @@ struct
            warn_past_end "Array size is smaller than n bytes; can cause a buffer overflow"
          else if n >. min_size then
            warn_past_end "Array size might be smaller than n bytes; can cause a buffer overflow"
+         else if get_bool "exp.success-messages" then
+           M.success ~category:M.Category.Behavior.Undefined.ArrayOutOfBounds.unknown "Array size is at least n bytes"
        | Some min_size, None ->
          if n >. min_size then
            warn_past_end "Array size might be smaller than n bytes; can cause a buffer overflow"
+         else if get_bool "exp.success-messages" then
+           M.success ~category:M.Category.Behavior.Undefined.ArrayOutOfBounds.unknown "Array size is at least n bytes"
        | None, Some max_size ->
          if n >. max_size then
            warn_past_end "Array size is smaller than n bytes; can cause a buffer overflow"
+         else if get_bool "exp.success-messages" then
+           M.success ~category:M.Category.Behavior.Undefined.ArrayOutOfBounds.unknown "Array size is at least n bytes"
        | None, None -> ());
       let nulls =
         (* if definitely no null byte in array, i.e. must_nulls_set = may_nulls_set = empty set *)
@@ -1331,8 +1349,11 @@ struct
       (warn_past_end "Array might not contain a null byte: potential buffer overflow";
        Idx.starting !Cil.kindOfSizeOf (Nulls.min_elem Possibly nulls))
       (* else return interval [minimal may null, minimal must null] *)
-    else
+    else (
+      if get_bool "exp.success-messages" then
+        M.success ~category:M.Category.Behavior.Undefined.ArrayOutOfBounds.unknown "Array contains a null byte";
       Idx.of_interval !Cil.kindOfSizeOf (Nulls.min_elem Possibly nulls, Nulls.min_elem Definitely nulls)
+    )
 
   let string_copy (dstnulls, dstsize) ((srcnulls, srcsize) as src) n =
     let must_nulls_set1, may_nulls_set1 = dstnulls in
@@ -1344,7 +1365,10 @@ struct
         (if max_dstsize <. min_srclen then
            warn_past_end "The length of string src is greater than the allocated size for dest"
          else if min_dstsize <. max_srclen then
-           warn_past_end "The length of string src may be greater than the allocated size for dest");
+           warn_past_end "The length of string src may be greater than the allocated size for dest"
+         else if get_bool "exp.success-messages" then
+            M.success ~category:M.Category.Behavior.Undefined.ArrayOutOfBounds.unknown "The length of string src is less than or equal to the allocated size for dest"
+        );
         let must_nulls_set_result =
           let min_size2 = BatOption.default Z.zero (Idx.minimal truncatedsize) in
           (* get must nulls from src string < minimal size of dest *)
@@ -1362,7 +1386,10 @@ struct
 
       | Some min_size1, None, Some min_len2, Some max_len2 ->
         (if min_size1 <. max_len2 then
-           warn_past_end "The length of string src may be greater than the allocated size for dest");
+           warn_past_end "The length of string src may be greater than the allocated size for dest"
+        else if get_bool "exp.success-messages" then
+          M.success ~category:M.Category.Behavior.Undefined.ArrayOutOfBounds.unknown "The length of string src is less than or equal to the allocated size for dest" 
+        );
         let must_nulls_set_result =
           let min_size2 = BatOption.default Z.zero (Idx.minimal truncatedsize) in
           MustSet.filter ~min_size: min_size2 (Z.gt min_size1) must_nulls_set2'
@@ -1376,7 +1403,9 @@ struct
         (if max_size1 <. min_len2 then
            warn_past_end "The length of string src is greater than the allocated size for dest"
          else if min_size1 <. min_len2 then
-           warn_past_end"The length of string src may be greater than the allocated size for dest");
+           warn_past_end"The length of string src may be greater than the allocated size for dest"
+         else if get_bool "exp.success-messages" then
+           M.success ~category:M.Category.Behavior.Undefined.ArrayOutOfBounds.unknown "The length of string src is less than or equal to the allocated size for dest");
         (* do not keep any index of dest as no maximal strlen of src *)
         let must_nulls_set_result =
           let min_size2 = BatOption.default Z.zero (Idx.minimal truncatedsize) in
@@ -1388,7 +1417,10 @@ struct
         ((must_nulls_set_result, may_nulls_set_result), dstsize)
       | Some min_size1, None, Some min_len2, None ->
         (if min_size1 <. min_len2 then
-           warn_past_end "The length of string src may be greater than the allocated size for dest");
+           warn_past_end "The length of string src may be greater than the allocated size for dest"
+         else if get_bool "exp.success-messages" then
+          M.success ~category:M.Category.Behavior.Undefined.ArrayOutOfBounds.unknown "The length of string src is less than or equal to the allocated size for dest" 
+        );
         (* do not keep any index of dest as no maximal strlen of src *)
         let min_size2 = BatOption.default Z.zero (Idx.minimal truncatedsize) in
         let truncatednulls = Nulls.remove_interval Possibly (Z.zero, min_size1) min_size2 truncatednulls in
