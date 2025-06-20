@@ -79,7 +79,7 @@
     "result": {
       "title": "result",
       "description":
-        "Result style: none, fast_xml, json, pretty, pretty-deterministic, json-messages, sarif.",
+        "Result style: none, fast_xml, json, pretty, pretty-deterministic, json-messages, dashboard, sarif.",
       "type": "string",
       "enum": ["none", "fast_xml", "json", "pretty", "pretty-deterministic", "json-messages", "sarif"],
       "default": "none"
