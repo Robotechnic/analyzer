@@ -208,6 +208,7 @@ struct
          | `Top ->
            M.warn ~category:M.Category.Integer.div_by_zero "Second argument of division might be zero"
          | `Neq -> 
+           if get_bool "success-messages" then
            M.success ~category:M.Category.Integer.div_by_zero "Second argument of division is not zero");
         ID.div x y
     | Mod -> 
@@ -218,6 +219,7 @@ struct
          | `Top ->
            M.warn ~category:M.Category.Integer.div_by_zero "Second argument of modulo might be zero"
          | `Neq -> 
+           if get_bool "success-messages" then
            M.success ~category:M.Category.Integer.div_by_zero "Second argument of modulo is not zero");
         ID.rem x y
     | Lt -> ID.lt
