@@ -99,6 +99,22 @@ struct
     let one_w f x = BatPrintf.fprintf f "\n<warning>%a</warning>" one_w x in
     List.iter (one_w f) !Messages.Table.messages_list
 
+  let convert_messages_to_dashboard () =
+    let messages = !Messages.Table.messages_list in
+    let open Messages in
+    `List (List.filter_map (fun m ->
+        match Message.(m.multipiece) with
+        | MultiPiece.Group _ -> None
+        | MultiPiece.Single piece ->
+          `Assoc [
+            ("kind", Severity.to_yojson Message.(m.severity));
+            ("tags", Tags.to_yojson Message.(m.tags));
+            ("message", `String piece.text);
+            ("location", Option.value ~default:`Null (Option.map Location.to_yojson piece.loc));
+          ] |> Option.some
+      ) messages)
+
+
   let output table gtable gtfxml (file: file) =
     let out = Messages.get_out result_name !Messages.out in
     match get_string "result" with
@@ -185,6 +201,14 @@ struct
       let json = `Assoc [
           ("files", Preprocessor.dependencies_to_yojson ());
           ("messages", Messages.Table.to_yojson ());
+        ]
+      in
+      Yojson.Safe.to_channel ~std:true out json
+    | "dashboard" -> 
+      let json = `Assoc [
+          ("files", Preprocessor.dependencies_to_yojson ());
+          ("time", `Float (if get_bool "dbg.timing.enabled" then Timing.Default.root.cputime else -1.));
+          ("checks", convert_messages_to_dashboard ());
         ]
       in
       Yojson.Safe.to_channel ~std:true out json
