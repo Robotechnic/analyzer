@@ -205,10 +205,10 @@ struct
       in
       Yojson.Safe.to_channel ~std:true out json
     | "dashboard" -> 
+      let timings = Timing.Default.root_with_current () in
       let json = `Assoc [
           ("files", Preprocessor.dependencies_to_yojson ());
-          (* TODO: Fix the timing if possible *)
-          ("time", `Float (if get_bool "dbg.timing.enabled" then (List.hd Timing.Default.root.children).cputime else -1.));
+          ("time", `Float (if get_bool "dbg.timing.enabled" then timings.cputime else -1.));
           ("checks", convert_messages_to_dashboard ());
         ]
       in
