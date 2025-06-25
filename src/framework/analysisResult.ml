@@ -207,7 +207,8 @@ struct
     | "dashboard" -> 
       let json = `Assoc [
           ("files", Preprocessor.dependencies_to_yojson ());
-          ("time", `Float (if get_bool "dbg.timing.enabled" then Timing.Default.root.cputime else -1.));
+          (* TODO: Fix the timing if possible *)
+          ("time", `Float (if get_bool "dbg.timing.enabled" then (List.hd Timing.Default.root.children).cputime else -1.));
           ("checks", convert_messages_to_dashboard ());
         ]
       in
